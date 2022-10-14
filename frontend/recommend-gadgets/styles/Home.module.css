@@ -1,0 +1,148 @@
+.container {
+  padding: 0 2rem;
+}
+
+.main {
+  min-height: 100vh;
+  padding: 3rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.grid {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  max-width: 850px;
+  margin-top: 1rem;
+}
+
+.card {
+  cursor: pointer;
+  margin: 1rem;
+  padding: 1rem;
+  text-align: left;
+  background-color: white;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  max-width: 250px;
+  box-shadow: 0 1px 8px #b8c6db;
+  -moz-box-shadow: 0 1px 8px #b8c6db;
+  -webkit-box-shadow: 0 1px 8px #b8c6db;
+}
+
+.card:hover,
+.card:focus,
+.card:active {
+  color: #0070f3;
+  border-color: #0070f3;
+  opacity: 0.8;
+}
+
+.card h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+}
+
+.card .product_name {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  /* To display only 3 lines, for more than 3 lines put ellipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logo {
+  height: 1em;
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    width: 100%;
+    flex-direction: column;
+  }
+}
+
+.searchbox {
+  width: 100%;
+  max-width: 850px;
+  position: relative;
+  display: flex;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+}
+
+.searchinput {
+  width: 100%;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  padding: 15px 45px 15px 15px;
+  background-color: #9c9c9c;
+  color: #ffffff;
+  border-radius: 6px;
+  border:none;
+  transition: all .4s;
+}
+
+.searchinput::placeholder {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.searchinput:focus {
+  border:none;
+  outline:none;
+  box-shadow: 0 1px 8px #b8c6db;
+  -moz-box-shadow: 0 1px 8px #b8c6db;
+  -webkit-box-shadow: 0 1px 8px #b8c6db;
+}
+
+.searchbtn {
+  background-color: #111111;
+  font-size: 24px;
+  padding: 6px 12px;
+  margin-left: -39px;
+  border:none;
+  color: white;
+  transition: all .4s;
+  z-index: 10;
+  border-radius: 6px;
+}
+
+.searchbtn:hover {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.searchbtn:focus {
+  outline:none;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  .card,
+  .footer {
+    border-color: #222;
+  }
+  .code {
+    background: #111;
+  }
+  .logo img {
+    filter: invert(1);
+  }
+} */

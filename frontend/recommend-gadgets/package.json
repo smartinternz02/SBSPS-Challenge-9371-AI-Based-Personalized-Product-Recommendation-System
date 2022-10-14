@@ -1,0 +1,25 @@
+{
+  "name": "recommend-gadgets",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "axios": "^1.1.2",
+    "http-proxy-middleware": "^2.0.6",
+    "next": "12.3.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-icons": "^4.4.0",
+    "react-query": "^3.39.2",
+    "react-spinners": "^0.13.6"
+  },
+  "devDependencies": {
+    "eslint": "8.25.0",
+    "eslint-config-next": "12.3.1"
+  }
+}
