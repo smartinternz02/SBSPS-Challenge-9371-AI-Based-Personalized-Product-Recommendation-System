@@ -1,10 +1,19 @@
 import axios from "axios";
-import { useQuery, useQueryClient, prefetchQuery } from "react-query";
+import {
+  useQuery,
+  useQueryClient,
+  prefetchQuery,
+  useInfiniteQuery,
+} from "react-query";
 // custom request function
 import { request } from "../utils/axios-utils";
 
-const fetchProducts = (name) => {
-  return request({ url: `/search`, method: "POST", data: { query: name } });
+const fetchProducts = (name, limit, pageNo) => {
+  return request({
+    url: `/search`,
+    method: "POST",
+    data: { query: name, limit, pageNo },
+  });
 };
 
 const fetchProduct = (name) => {
@@ -21,29 +30,40 @@ const fetchRecommendedProducts = (options) => {
   });
 };
 
-export const useProductsData = (name, onSuccess, onError) => {
+export const useProductsData = (
+  { name, limit, pageNo },
+  onSuccess,
+  onError
+) => {
   const queryClient = useQueryClient();
 
-  return useQuery(["products"], () => fetchProducts(name), {
-    // 5 mins (read FRONTEND_README). No network request will happen till 5 mins, after initial request.
-    staleTime: 1000 * 60 * 5,
-    onSuccess,
-    onError,
-    enabled: true,
-    // Method called after successful execution to modify the data.
-    // Although the full data will be stored, return only selected keys to be used in the UI
-    select: (data) => {
-      const productsData = data.data.map((product) => {
-        return {
-          id: product.id,
-          picture_url: product.picture_url,
-          product_name: product.product_name,
-          brand: product.brand,
-        };
-      });
-      return productsData;
-    },
-  });
+  return useQuery(
+    ["products", name, limit, pageNo],
+    () => fetchProducts(name, limit, pageNo),
+    {
+      // 5 mins (read FRONTEND_README). No network request will happen till 5 mins, after initial request.
+      staleTime: 1000 * 60 * 5,
+      onSuccess,
+      onError,
+      enabled: false,
+      keepPreviousData: true,
+      // Method called after successful execution to modify the data.
+      // Although the full data will be stored, return only selected keys to be used in the UI
+      select: (data) => {
+        let tData = { hasMore: data.data?.hasMore, productsData: [] };
+        const productsData = data.data?.products.map((product) => {
+          return {
+            id: product.id,
+            picture_url: product.picture_url,
+            product_name: product.product_name,
+            brand: product.brand,
+          };
+        });
+        tData.productsData = productsData;
+        return tData;
+      },
+    }
+  );
 };
 
 export const useProductData = (name, onSuccess, onError) => {
@@ -64,7 +84,7 @@ export const useProductData = (name, onSuccess, onError) => {
 };
 
 export const useRecommendedProductsData = (options, onSuccess, onError) => {
-  return useQuery(
+  return useInfiniteQuery(
     ["recommended_products"],
     () => fetchRecommendedProducts(options),
     {
@@ -73,8 +93,10 @@ export const useRecommendedProductsData = (options, onSuccess, onError) => {
       onError,
       // To prevent it from automatically running
       enabled: false,
-      select: (data) => {
-        return data.data;
+      getNextPageParam: (lastPage, pages) => {
+        // console.log("===> getNextPageParam");
+        // console.log(lastPage);
+        return lastPage.data?.hasMore;
       },
     }
   );

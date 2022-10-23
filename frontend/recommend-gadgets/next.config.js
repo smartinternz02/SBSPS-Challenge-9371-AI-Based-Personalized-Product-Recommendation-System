@@ -10,7 +10,7 @@ const nextConfig = {
     DOMAIN: "http://localhost:3000",
   },
   images: {
-    domains: ["i.gadgets360cdn.com", "gadgets.ndtv.com"],
+    domains: ["i.gadgets360cdn.com", "gadgets.ndtv.com", "drop.ndtv.com"],
   },
 };
 

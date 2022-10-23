@@ -17,6 +17,9 @@ const Product = () => {
   let [color, setColor] = useState("#4169E1");
   const [filter, setFilter] = useState(false);
 
+  const [pageNo, setPageNo] = React.useState(1);
+  const [limit, setLimit] = React.useState(6);
+
   const router = useRouter();
   const { productName } = router.query;
 
@@ -47,14 +50,24 @@ const Product = () => {
 
   const {
     isLoading: isRecommendationLoading,
-    data: recommendedProducts,
+    data: rData,
     isError: isRecommendationError,
     error: recommendationError,
     isRefetching: isRecommendationRefetching,
     isRefetchError: isRecommendationRefetchError,
     refetch: refetchRecommendation,
+    isFetchingNextPage,
+    // "hasNextPage" boolean is now available and is true if "getNextPageParam" returns a value "other" than "undefined"
+    hasNextPage,
+    fetchNextPage,
   } = useRecommendedProductsData(
-    { name: productName, brand: product?.brand, sameBrand: filter },
+    {
+      name: productName,
+      brand: product?.brand,
+      sameBrand: filter,
+      limit,
+      pageNo,
+    },
     productsDataOnSuccess,
     productsDataOnError
   );
@@ -81,6 +94,12 @@ const Product = () => {
   const handleCheckbox = (productName, filter) => {
     setFilter(!filter);
   };
+
+  React.useEffect(() => {
+    if (pageNo > 1) {
+      fetchNextPage();
+    }
+  }, [pageNo]);
 
   return (
     <div className={styles.container}>
@@ -140,12 +159,17 @@ const Product = () => {
                     className={pstyles.customCheckbox}
                     type="checkbox"
                     name="checkbox-checked"
-                    onChange={() => handleCheckbox(productName, filter)}
+                    onChange={() => {
+                      setPageNo(1);
+                      handleCheckbox(productName, filter);
+                    }}
                     checked={filter}
                   />
                   <div
                     style={{ marginTop: "-4px" }}
-                    onClick={() => handleCheckbox(productName, filter)}
+                    onClick={() => {
+                      handleCheckbox(productName, filter);
+                    }}
                   >
                     Include Same Brand ({product.brand})
                   </div>
@@ -179,38 +203,52 @@ const Product = () => {
           <h2>Oops ! An error occurred while loading.</h2>
         )}
 
+        {/* {JSON.stringify(rData.pages[0].data)} */}
+
         <div className={styles.grid}>
-          {recommendedProducts &&
-            recommendedProducts.map((gadget, i) => (
-              <Link
-                key={gadget.id + i}
-                href={{
-                  pathname: "/product",
-                  query: { productName: gadget.product_name },
-                }}
-              >
-                <div className={styles.card}>
-                  <h2>{gadget.brand} &rarr;</h2>
-                  <img
-                    src={gadget.picture_url}
-                    className={pstyles.recommendedImage}
-                    alt="Image not found"
-                    onError={({ currentTarget }) => {
-                      currentTarget.onerror = null; // prevents looping
-                      currentTarget.src = "../images/placeholder.jpg";
+          {rData?.pages &&
+            rData.pages?.map((group, i) => (
+              <React.Fragment key={i}>
+                {group.data?.recommended_products?.map((gadget, j) => (
+                  <Link
+                    key={gadget.id + j}
+                    href={{
+                      pathname: "/product",
+                      query: { productName: gadget.product_name },
                     }}
-                  />
-                  {/* <Image
-                    alt="Electronic Gadgets"
-                    src={gadget.picture_url}
-                    layout="responsive"
-                    width={700}
-                    height={475}
-                  /> */}
-                  <p className={styles.product_name}>{gadget.product_name}.</p>
-                </div>
-              </Link>
+                  >
+                    <div className={styles.card}>
+                      <h2>{gadget.brand} &rarr;</h2>
+                      <img
+                        src={gadget.picture_url}
+                        className={pstyles.recommendedImage}
+                        alt="Image not found"
+                        onError={({ currentTarget }) => {
+                          currentTarget.onerror = null; // prevents looping
+                          currentTarget.src = "../images/placeholder.jpg";
+                        }}
+                      />
+
+                      <p className={styles.product_name}>
+                        {gadget.product_name}.
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </React.Fragment>
             ))}
+        </div>
+        <div>
+          <button
+            onClick={() => setPageNo((no) => no + 1)}
+            disabled={!hasNextPage || isFetchingNextPage}
+          >
+            {isFetchingNextPage
+              ? "Loading more..."
+              : hasNextPage
+              ? "Load More"
+              : "Nothing more to load"}
+          </button>
         </div>
       </main>{" "}
     </div>

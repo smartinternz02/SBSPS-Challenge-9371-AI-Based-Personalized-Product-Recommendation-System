@@ -24,8 +24,11 @@ def searchGadgets():
   try:
       
     data = json.loads(request.data)
-
     query = data['query']
+    limit = data['limit']
+    pageNo = data['pageNo']
+
+    hasMore = False
     
     products = []
     # the __file__ constant is relative to the current working directory
@@ -40,7 +43,8 @@ def searchGadgets():
     foundProductCount = 0
 
     for index, value in enumerate(values):
-      if foundProductCount == 6:
+      # one extra for hasMore status
+      if foundProductCount == limit*pageNo + 1:
         break
       if value == True:
         # print(str(index) + "=>" + str(value))
@@ -55,10 +59,22 @@ def searchGadgets():
         })
         foundProductCount+=1
 
+    if len(products) > limit*pageNo:
+      if pageNo == 1:
+        # limit non-inclusive
+        products = products[0:limit]
+        hasMore = True
+      else:
+        # limit non-inclusive
+        products = products[limit*(pageNo-1):limit*pageNo]
+        hasMore = True
+    else:
+      products = products[limit*(pageNo-1):len(products)]
+
 
     # jsonify produces a full response object.
     # json.dumps produces only the response body.
-    return Response(json.dumps(products), status=200, content_type='application/json')
+    return Response(json.dumps({'products': products, 'hasMore': hasMore}), status=200, content_type='application/json')
   except Exception as e:
     print("===== ERROR ROUTE :- /api/search =====")
     print(e)
@@ -102,8 +118,11 @@ def recommendProducts():
     product_name = request.args.get("name")
     brand = request.args.get("brand")
     includeSameBrand = request.args.get("sameBrand")
-    
-    print("brand ===>", brand)
+    limit = request.args.get("limit")
+    limit = int(limit)
+    pageNo = request.args.get("pageNo")
+    pageNo = int(pageNo)
+    hasMore = False
 
     recommended_products = []
     # the __file__ constant is relative to the current working directory
@@ -120,42 +139,48 @@ def recommendProducts():
 
     
     if includeSameBrand == "true":
-      for i in distances[0:6]:
-        print(EG_df.iloc[i[0]])
-        recommended_products.append(EG_df.iloc[i[0]])
-
-      recommended_products = [{
-        'id': product['Product_Id'],
-        'picture_url': product['Picture URL'],
-        'brand': product['Brand'],
-        'product_name': product['Product Name'],
-        'model': product['Model'],
-        'price_inr': product['Price in India'],
-        'ratings': product['Ratings'],
-      } for product in recommended_products]
+      foundProductCount = 0
+      # when "includeSameBrand" is true it will include all the products whose brand is same afterwards it will include other brands as well. Therefore, foundProductCount will always be "greater than equal" limit*pageNo. If limit*pageNo is too big then whole loop will execute 
+      for i in distances:
+        if foundProductCount >= limit*pageNo + 1:
+          break
+        else:
+          print(EG_df.iloc[i[0]])
+          recommended_products.append(EG_df.iloc[i[0]])
+          foundProductCount+=1
     else:
       for i in distances:
         print(EG_df.iloc[i[0]]["tags"].lower())
-        if len(recommended_products) == 6:
+        if len(recommended_products) == limit*pageNo + 1:
           break;
         if brand.lower() not in EG_df.iloc[i[0]]["tags"].lower():
-          recommended_products.append(EG_df.iloc[i[0]])
-        
+          recommended_products.append(EG_df.iloc[i[0]]) 
 
-      recommended_products = [{
-        'id': product['Product_Id'],
-        'picture_url': product['Picture URL'],
-        'brand': product['Brand'],
-        'product_name': product['Product Name'],
-        'model': product['Model'],
-        'price_inr': product['Price in India'],
-        'ratings': product['Ratings'],
-      } for product in recommended_products]      
+    if len(recommended_products) > limit*pageNo:
+      if pageNo == 1:
+        # limit non-inclusive
+        recommended_products = recommended_products[0:limit]
+        hasMore = True
+      else:
+        # limit non-inclusive
+        recommended_products = recommended_products[limit*(pageNo-1):limit*pageNo]
+        hasMore = True
+    else:
+      recommended_products = recommended_products[limit*(pageNo-1):len(recommended_products)]
 
+    recommended_products = [{
+      'id': product['Product_Id'],
+      'picture_url': product['Picture URL'],
+      'brand': product['Brand'],
+      'product_name': product['Product Name'],
+      'model': product['Model'],
+      'price_inr': product['Price in India'],
+      'ratings': product['Ratings'],
+    } for product in recommended_products]      
 
     # jsonify produces a full response object.
     # json.dumps produces only the response body.
-    return Response(json.dumps(recommended_products), status=200, content_type='application/json')
+    return Response(json.dumps({'recommended_products': recommended_products, 'hasMore': hasMore}), status=200, content_type='application/json')
   except Exception as e:
     print("===== ERROR ROUTE :- /api/recommended_products =====")
     print(e)

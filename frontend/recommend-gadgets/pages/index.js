@@ -5,51 +5,15 @@ import styles from "../styles/Home.module.css";
 import { HiSearch } from "react-icons/hi";
 import { useProductsData } from "../hooks/useProductsHook";
 import React from "react";
+import BounceLoader from "react-spinners/BounceLoader";
 
 export default function Home() {
+  let [color, setColor] = React.useState("#4169E1");
+  let [loading, setLoading] = React.useState(true);
+
   const [name, setName] = React.useState("");
-  // const data = [
-  //   {
-  //     id: "132793040",
-  //     picture_url:
-  //       "https://i.gadgets360cdn.com/products/cameras/large/1548234988_832_ricoh_pentax-k-s2-20-12mp-dslr-camera.jpg?downsize=*:180&amp;output-quality=80&amp;output-format=webp",
-  //     brand: "Ricoh",
-  //     product_name: "Ricoh Pentax K-S2 DSLR Camera 20.1MP, Black & Orange",
-  //     model: "Pentax K-S2 20.12MP DSLR Camera",
-  //     price_inr: "â‚¹ 98,201",
-  //     rating: "4",
-  //   },
-  //   {
-  //     id: "132793040",
-  //     picture_url:
-  //       "https://i.gadgets360cdn.com/products/cameras/large/1548234988_832_ricoh_pentax-k-s2-20-12mp-dslr-camera.jpg?downsize=*:180&amp;output-quality=80&amp;output-format=webp",
-  //     brand: "Ricoh",
-  //     product_name: "Ricoh Pentax K-S2 DSLR Camera 20.1MP, Black & Orange",
-  //     model: "Pentax K-S2 20.12MP DSLR Camera",
-  //     price_inr: "â‚¹ 98,201",
-  //     rating: "4",
-  //   },
-  //   {
-  //     id: "132793040",
-  //     picture_url:
-  //       "https://i.gadgets360cdn.com/products/cameras/large/1548234988_832_ricoh_pentax-k-s2-20-12mp-dslr-camera.jpg?downsize=*:180&amp;output-quality=80&amp;output-format=webp",
-  //     brand: "Ricoh",
-  //     product_name: "Ricoh Pentax K-S2 DSLR Camera 20.1MP, Black & Orange",
-  //     model: "Pentax K-S2 20.12MP DSLR Camera",
-  //     price_inr: "â‚¹ 98,201",
-  //     rating: "4",
-  //   },
-  //   {
-  //     id: "132793040",
-  //     picture_url:
-  //       "https://i.gadgets360cdn.com/products/cameras/large/1548234988_832_ricoh_pentax-k-s2-20-12mp-dslr-camera.jpg?downsize=*:180&amp;output-quality=80&amp;output-format=webp",
-  //     brand: "Ricoh",
-  //     product_name: "Ricoh Pentax K-S2 DSLR Camera 20.1MP, Black & Orange",
-  //     model: "Pentax K-S2 20.12MP DSLR Camera",
-  //     price_inr: "â‚¹ 98,201",
-  //     rating: "4",
-  //   },
-  // ];
+  const [pageNo, setPageNo] = React.useState(1);
+  const [limit, setLimit] = React.useState(9);
 
   const productsDataOnSuccess = (data) => {
     console.log(
@@ -59,20 +23,30 @@ export default function Home() {
 
   const productsDataOnError = (error) => {
     console.log(
-      "Pefrom side effect on error (like setting an erro) => ",
+      "Pefrom side effect on error (like setting an error) => ",
       error
     );
   };
 
   const {
     isLoading,
-    data: productsData,
+    data,
     isError,
     error,
     isRefetching,
     isRefetchError,
+    isPreviousData,
     refetch,
-  } = useProductsData(name, productsDataOnSuccess, productsDataOnError);
+  } = useProductsData(
+    { name, pageNo, limit },
+    productsDataOnSuccess,
+    productsDataOnError
+  );
+
+  // As "enabled" option in hook is set to "false" need to manually refetch. Otherwise whenever any of the arguments of "useProductsData(....)" changes it will automatically refetch
+  React.useEffect(() => {
+    refetch({ cancelRefetch: true });
+  }, [pageNo]);
 
   return (
     <div className={styles.container}>
@@ -88,7 +62,11 @@ export default function Home() {
             className={styles.searchinput}
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              // Reset the page No
+              setPageNo(1);
+            }}
             placeholder="Search electronic gadgets ...."
           />
           {/* If "cancelRefetch" is true, then the current request will be cancelled before a new request is made */}
@@ -101,19 +79,29 @@ export default function Home() {
         </div>
 
         {/* "isRefetching" Is TRUE whenever a background refetch is in-flight, which does not include initial loading "isLoading". Is the same as `isFetching && !isLoading` */}
-        {(isLoading || isRefetching) && <h2>Loading ....</h2>}
+        {isLoading && (
+          <h2>
+            <BounceLoader
+              color={color}
+              loading={loading}
+              size={150}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          </h2>
+        )}
 
         {(isError || isRefetchError) && (
           <h2>Oops ! An error occurred while loading.</h2>
         )}
 
-        {productsData && productsData.length < 1 && (
+        {data?.productsData && data?.productsData.length < 1 && (
           <h2>Oops ! No data available</h2>
         )}
 
-        {productsData && productsData.length > 0 && (
+        {data?.productsData && data?.productsData.length > 0 && (
           <div className={styles.grid}>
-            {productsData.map((gadget, i) => (
+            {data?.productsData.map((gadget, i) => (
               <Link
                 key={gadget.id + i.toString()}
                 href={{
@@ -123,12 +111,10 @@ export default function Home() {
               >
                 <div className={styles.card}>
                   <h2>{gadget.brand} &rarr;</h2>
-                  <Image
-                    alt="Mountains"
+                  <img
+                    alt=" Product Image"
                     src={gadget.picture_url}
-                    layout="responsive"
-                    width={700}
-                    height={475}
+                    className={styles.searchImage}
                   />
                   <p className={styles.product_name}>{gadget.product_name}.</p>
                 </div>
@@ -136,6 +122,90 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        {/* "isRefetching" is useful in `refetching` the data or `fetching more data` like using paginated queries or inifinite queries. */}
+        {isRefetching && (
+          <h2>
+            <BounceLoader
+              color={color}
+              loading={loading}
+              size={70}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          </h2>
+        )}
+
+        <div className={styles.pagination_container}>
+          <button
+            className={`${styles.pagination_number} ${
+              pageNo === 1 && styles.pagination_disabled
+            } ${styles.arrow}`}
+            disabled={pageNo === 1}
+            onClick={() => {
+              setPageNo((old) => Math.max(old - 1, 1));
+            }}
+          >
+            <svg width="24" height="24">
+              <use xlinkHref="#left" />
+            </svg>
+            <span className={styles.arrow_text}>Prev</span>
+          </button>
+
+          <div
+            className={`${styles.pagination_number} ${styles.pagination_active}`}
+          >
+            {pageNo}
+          </div>
+
+          <button
+            className={`${styles.pagination_number} ${styles.arrow} ${
+              !data?.hasMore && styles.pagination_disabled
+            } ${styles.arrow}`}
+            disabled={!data?.hasMore}
+            onClick={() => {
+              if (!isPreviousData && data.hasMore) {
+                setPageNo((old) => old + 1);
+              }
+            }}
+          >
+            <span className={styles.arrow_text}>Next</span>
+            <svg width="24" height="24">
+              <use xlinkHref="#right" />
+            </svg>
+          </button>
+        </div>
+
+        <svg className={styles.hide}>
+          <symbol
+            id="left"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 19l-7-7 7-7"
+            ></path>
+          </symbol>
+          <symbol
+            id="right"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M9 5l7 7-7 7"
+            ></path>
+          </symbol>
+        </svg>
       </main>
     </div>
   );
