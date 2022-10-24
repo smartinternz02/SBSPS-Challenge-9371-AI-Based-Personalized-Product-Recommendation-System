@@ -11,6 +11,7 @@ import {
 } from "../hooks/useProductsHook";
 import BounceLoader from "react-spinners/BounceLoader";
 import PlaceholderImg from "../images/placeholder.jpg";
+import { QueryClient } from "react-query";
 
 const Product = () => {
   let [loading, setLoading] = useState(true);
@@ -36,7 +37,7 @@ const Product = () => {
     );
   };
 
-  console.log("1. productName =>", productName, new Date().toString());
+  const queryClient = new QueryClient();
 
   const {
     isLoading: isProductLoading,
@@ -74,7 +75,6 @@ const Product = () => {
 
   React.useEffect(() => {
     if (!router.isReady) return;
-    console.log("productName ===> ", productName);
     if (typeof productName === "string") {
       refetchProduct({ cancelRefetch: false });
     }
@@ -89,17 +89,62 @@ const Product = () => {
     ) {
       refetchRecommendation({ cancelRefetch: false });
     }
+    return () => {
+      const data = queryClient.getQueryData(["recommended_products"]);
+      console.log("===> QUERY DATA");
+      console.log(data);
+      queryClient.resetQueries("recommended_products", { exact: true });
+    };
   }, [productName, product, filter]);
 
   const handleCheckbox = (productName, filter) => {
     setFilter(!filter);
   };
 
+  // MANUALLY FETCH NEXT PAGE WHEN PAGE NO CHANGES
   React.useEffect(() => {
     if (pageNo > 1) {
       fetchNextPage();
     }
   }, [pageNo]);
+
+  React.useEffect(() => {
+    return () => {};
+  }, []);
+
+  // ===> FOR INFINITE SCROLL
+  const [lastElement, setLastElement] = useState(null);
+
+  let observer;
+
+  if (typeof window !== "undefined") {
+    observer = React.useRef(
+      new IntersectionObserver((entries) => {
+        const first = entries[0];
+        if (first.isIntersecting) {
+          setPageNo((no) => no + 1);
+        }
+      })
+    );
+  }
+  React.useEffect(() => {
+    let currentElement;
+    let currentObserver;
+    if (observer) {
+      currentElement = lastElement;
+      currentObserver = observer.current;
+
+      if (currentElement && currentObserver) {
+        currentObserver.observe(currentElement);
+      }
+    }
+
+    return () => {
+      if (observer && currentElement && currentObserver) {
+        currentObserver.unobserve(currentElement);
+      }
+    };
+  }, [lastElement]);
 
   return (
     <div className={styles.container}>
@@ -210,12 +255,10 @@ const Product = () => {
             rData.pages?.map((group, i) => (
               <React.Fragment key={i}>
                 {group.data?.recommended_products?.map((gadget, j) => (
-                  <Link
-                    key={gadget.id + j}
-                    href={{
-                      pathname: "/product",
-                      query: { productName: gadget.product_name },
-                    }}
+                  <a
+                    key={gadget.id + i.toString()}
+                    href={`/product?productName=${gadget.product_name}`}
+                    style={{ textDecoration: "none" }}
                   >
                     <div className={styles.card}>
                       <h2>{gadget.brand} &rarr;</h2>
@@ -233,23 +276,30 @@ const Product = () => {
                         {gadget.product_name}.
                       </p>
                     </div>
-                  </Link>
+                  </a>
                 ))}
               </React.Fragment>
             ))}
         </div>
-        <div>
-          <button
-            onClick={() => setPageNo((no) => no + 1)}
-            disabled={!hasNextPage || isFetchingNextPage}
-          >
-            {isFetchingNextPage
-              ? "Loading more..."
-              : hasNextPage
-              ? "Load More"
-              : "Nothing more to load"}
-          </button>
-        </div>
+        {isFetchingNextPage && (
+          <h2>
+            <BounceLoader
+              color={color}
+              loading={loading}
+              size={70}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          </h2>
+        )}
+        {!isProductLoading &&
+          !isRecommendationLoading &&
+          !isFetchingNextPage &&
+          hasNextPage && (
+            <div className={pstyles.loadMoreDiv} ref={setLastElement}>
+              {/* disabled={!hasNextPage || isFetchingNextPage} */}
+            </div>
+          )}
       </main>{" "}
     </div>
   );

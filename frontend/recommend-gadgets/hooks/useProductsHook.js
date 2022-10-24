@@ -17,7 +17,6 @@ const fetchProducts = (name, limit, pageNo) => {
 };
 
 const fetchProduct = (name) => {
-  console.log("3. fetchProduct name => ", name, new Date().toString());
   return request({ url: `/product`, method: "GET", params: { name: name } });
 };
 

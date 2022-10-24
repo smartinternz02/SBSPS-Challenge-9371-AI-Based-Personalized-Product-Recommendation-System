@@ -59,6 +59,7 @@ export default function Home() {
       <main className={styles.main}>
         <div className={styles.searchbox}>
           <input
+            id={`search-${pageNo}`}
             className={styles.searchinput}
             type="text"
             value={name}
@@ -77,7 +78,6 @@ export default function Home() {
             <HiSearch />
           </button>
         </div>
-
         {/* "isRefetching" Is TRUE whenever a background refetch is in-flight, which does not include initial loading "isLoading". Is the same as `isFetching && !isLoading` */}
         {isLoading && (
           <h2>
@@ -90,37 +90,11 @@ export default function Home() {
             />
           </h2>
         )}
-
         {(isError || isRefetchError) && (
           <h2>Oops ! An error occurred while loading.</h2>
         )}
-
         {data?.productsData && data?.productsData.length < 1 && (
           <h2>Oops ! No data available</h2>
-        )}
-
-        {data?.productsData && data?.productsData.length > 0 && (
-          <div className={styles.grid}>
-            {data?.productsData.map((gadget, i) => (
-              <Link
-                key={gadget.id + i.toString()}
-                href={{
-                  pathname: "/product",
-                  query: { productName: gadget.product_name },
-                }}
-              >
-                <div className={styles.card}>
-                  <h2>{gadget.brand} &rarr;</h2>
-                  <img
-                    alt=" Product Image"
-                    src={gadget.picture_url}
-                    className={styles.searchImage}
-                  />
-                  <p className={styles.product_name}>{gadget.product_name}.</p>
-                </div>
-              </Link>
-            ))}
-          </div>
         )}
 
         {/* "isRefetching" is useful in `refetching` the data or `fetching more data` like using paginated queries or inifinite queries. */}
@@ -135,47 +109,76 @@ export default function Home() {
             />
           </h2>
         )}
-
-        <div className={styles.pagination_container}>
-          <button
-            className={`${styles.pagination_number} ${
-              pageNo === 1 && styles.pagination_disabled
-            } ${styles.arrow}`}
-            disabled={pageNo === 1}
-            onClick={() => {
-              setPageNo((old) => Math.max(old - 1, 1));
-            }}
-          >
-            <svg width="24" height="24">
-              <use xlinkHref="#left" />
-            </svg>
-            <span className={styles.arrow_text}>Prev</span>
-          </button>
-
-          <div
-            className={`${styles.pagination_number} ${styles.pagination_active}`}
-          >
-            {pageNo}
+        {data?.productsData && data?.productsData.length > 0 && (
+          <div className={styles.grid}>
+            {data?.productsData.map((gadget, i) => (
+              // <Link
+              //   key={gadget.id + i.toString()}
+              //   href={{
+              //     pathname: "/product",
+              //     query: { productName: gadget.product_name },
+              //   }}
+              // >
+              <a
+                key={gadget.id + i.toString()}
+                href={`/product?productName=${gadget.product_name}`}
+                style={{ textDecoration: "none" }}
+              >
+                <div className={styles.card}>
+                  <h2>{gadget.brand} &rarr;</h2>
+                  <img
+                    alt=" Product Image"
+                    src={gadget.picture_url}
+                    className={styles.searchImage}
+                  />
+                  <p className={styles.product_name}>{gadget.product_name}.</p>
+                </div>
+              </a>
+              // </Link>
+            ))}
           </div>
+        )}
+        {data?.productsData && data?.productsData.length > 0 && (
+          <div className={styles.pagination_container}>
+            <a
+              href={`#search-${pageNo}`}
+              className={`${styles.pagination_number} ${
+                pageNo === 1 && styles.pagination_disabled
+              } ${styles.arrow}`}
+              onClick={() => {
+                setPageNo((old) => Math.max(old - 1, 1));
+              }}
+            >
+              <svg width="24" height="24">
+                <use xlinkHref="#left" />
+              </svg>
+              <span className={styles.arrow_text}>Prev</span>
+            </a>
 
-          <button
-            className={`${styles.pagination_number} ${styles.arrow} ${
-              !data?.hasMore && styles.pagination_disabled
-            } ${styles.arrow}`}
-            disabled={!data?.hasMore}
-            onClick={() => {
-              if (!isPreviousData && data.hasMore) {
-                setPageNo((old) => old + 1);
-              }
-            }}
-          >
-            <span className={styles.arrow_text}>Next</span>
-            <svg width="24" height="24">
-              <use xlinkHref="#right" />
-            </svg>
-          </button>
-        </div>
+            <div
+              className={`${styles.pagination_number} ${styles.pagination_active}`}
+            >
+              {pageNo}
+            </div>
 
+            <a
+              href={`#search-${pageNo}`}
+              className={`${styles.pagination_number} ${styles.arrow} ${
+                !data?.hasMore && styles.pagination_disabled
+              } ${styles.arrow}`}
+              onClick={() => {
+                if (!isPreviousData && data.hasMore) {
+                  setPageNo((old) => old + 1);
+                }
+              }}
+            >
+              <span className={styles.arrow_text}>Next</span>
+              <svg width="24" height="24">
+                <use xlinkHref="#right" />
+              </svg>
+            </a>
+          </div>
+        )}
         <svg className={styles.hide}>
           <symbol
             id="left"

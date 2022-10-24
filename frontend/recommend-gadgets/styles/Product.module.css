@@ -145,3 +145,10 @@
   color: var(--form-control-disabled);
   cursor: not-allowed;
 }
+
+.loadMoreDiv {
+  min-height: 3rem;
+  min-width: 100%;
+  border: 2px solid black;
+  margin-top: 2rem;
+}
